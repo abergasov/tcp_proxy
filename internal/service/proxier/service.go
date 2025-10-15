@@ -32,6 +32,7 @@ func (s *Service) Start() {
 	for {
 		client, errA := listener.Accept()
 		if errA != nil {
+			s.log.Error("failed to accept client", errA)
 			continue
 		}
 		s.log.Info("accepted new client")
