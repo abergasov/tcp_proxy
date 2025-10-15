@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,17 +11,16 @@ import (
 )
 
 var (
-	confFile = flag.String("config", "configs/app_conf.yml", "Configs file path")
+	confFile = "configs/app_conf.yml"
 )
 
 func main() {
-	flag.Parse()
 	appLog := logger.NewAppSLogger()
 
-	appLog.Info("app starting", logger.WithString("conf", *confFile))
-	appConf, err := config.InitConf(*confFile)
+	appLog.Info("app starting", logger.WithString("conf", confFile))
+	appConf, err := config.InitConf(confFile)
 	if err != nil {
-		appLog.Fatal("unable to init config", err, logger.WithString("config", *confFile))
+		appLog.Fatal("unable to init config", err, logger.WithString("config", confFile))
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
