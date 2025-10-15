@@ -2,6 +2,25 @@
 Description=proxy messages from one to another
 
 [Service]
+# --- Contain memory growth ---
+MemoryAccounting=true
+# Start throttling above this (soft pressure):
+MemoryHigh=1G
+# Hard cap (hit => OOM in this cgroup):
+MemoryMax=1.5G
+# Optional: disallow swap for this unit
+MemorySwapMax=0
+#   continue | stop | kill
+# 'kill' terminates the whole unit's cgroup on OOM.
+OOMPolicy=kill
+# app to be killed than sshd on global OOM:
+OOMScoreAdjust=500
+
+# Reasonable stops:
+TimeoutStopSec=15s
+KillMode=mixed
+LimitNOFILE=2048
+
 Type=simple
 Restart=always
 RestartSec=5s
