@@ -1,0 +1,4 @@
+.idea
+!bin/.gitkeep
+bin/*
+configs/app_conf.yml

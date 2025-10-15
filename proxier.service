@@ -1,0 +1,12 @@
+[Unit]
+Description=proxy messages from one to another
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+User=user
+ExecStart=/path_to_binary
+
+[Install]
+WantedBy=multi-user.target
