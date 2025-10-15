@@ -7,6 +7,7 @@ import (
 	"net"
 	"tcp_proxy/internal/config"
 	"tcp_proxy/internal/logger"
+	"time"
 )
 
 type Service struct {
@@ -42,11 +43,15 @@ func (s *Service) Start() {
 
 func (s *Service) handle(c net.Conn) {
 	defer c.Close()
-	server, err := net.Dial("tcp", fmt.Sprintf("%s:%d", s.conf.DestinationAddress, s.conf.DestinationPort))
+	_ = c.(*net.TCPConn).SetKeepAlive(true)
+	_ = c.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
+	server, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", s.conf.DestinationAddress, s.conf.DestinationPort), 10*time.Second)
 	if err != nil {
 		s.log.Fatal("failed to connect to remote server", err)
 	}
 	defer server.Close()
+	_ = server.(*net.TCPConn).SetKeepAlive(true)
+	_ = server.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
 
 	go io.Copy(server, c)
 	io.Copy(c, server)
