@@ -33,15 +33,18 @@ type TestGRPCServer struct {
 
 const EchoMethod = "/test.EchoService/EchoBytes"
 
-func NewTestGRPCServer(t *testing.T, cert tls.Certificate) *TestGRPCServer {
+func NewTestGRPCServer(t *testing.T, cert tls.Certificate, secureConnection bool) *TestGRPCServer {
 	t.Helper()
 
 	ln, err := net.Listen("tcp4", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	s := grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{cert},
-	})))
+	s := grpc.NewServer()
+	if secureConnection {
+		s = grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
+			Certificates: []tls.Certificate{cert},
+		})))
+	}
 
 	s.RegisterService(&grpc.ServiceDesc{
 		ServiceName: "test.EchoService",

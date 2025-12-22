@@ -15,4 +15,5 @@ type Notificator interface {
 	SendInfoMessage(message string, args ...string) error
 	SendTaskErrMessage(service string, startedAt, finishedAt time.Time, message string, errs ...Object) error
 	SendInfoNewRequest(r *http.Request, body []byte, remoteIP, destination string) error
+	SendInfoNewGRPCRequest(remoteIP, destination string) error
 }

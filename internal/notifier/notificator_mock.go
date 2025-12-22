@@ -59,6 +59,20 @@ func (mr *MockNotificatorMockRecorder) SendInfoMessage(message any, args ...any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendInfoMessage", reflect.TypeOf((*MockNotificator)(nil).SendInfoMessage), varargs...)
 }
 
+// SendInfoNewGRPCRequest mocks base method.
+func (m *MockNotificator) SendInfoNewGRPCRequest(remoteIP, destination string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendInfoNewGRPCRequest", remoteIP, destination)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendInfoNewGRPCRequest indicates an expected call of SendInfoNewGRPCRequest.
+func (mr *MockNotificatorMockRecorder) SendInfoNewGRPCRequest(remoteIP, destination any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendInfoNewGRPCRequest", reflect.TypeOf((*MockNotificator)(nil).SendInfoNewGRPCRequest), remoteIP, destination)
+}
+
 // SendInfoNewRequest mocks base method.
 func (m *MockNotificator) SendInfoNewRequest(r *http.Request, body []byte, remoteIP, destination string) error {
 	m.ctrl.T.Helper()

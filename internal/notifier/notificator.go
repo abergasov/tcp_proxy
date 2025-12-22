@@ -62,6 +62,22 @@ func NewService(l logger.AppLogger, boxName, slackHookURL string) *Service {
 	}
 }
 
+func (s *Service) SendInfoNewGRPCRequest(remoteIP, destination string) error {
+	return s.sendSlackMessage(map[string]any{
+		"blocks": []any{
+			getHeader(":eyes: observe new unsecure grpc request"),
+			map[string]any{
+				"type": "section",
+				"fields": []any{
+					slackField("From", remoteIP),
+					slackField("To", destination),
+				},
+			},
+			s.getContext(),
+		},
+	})
+}
+
 func (s *Service) SendInfoNewRequest(r *http.Request, body []byte, remoteIP, destination string) error {
 	return s.sendSlackMessage(map[string]any{
 		"blocks": []any{

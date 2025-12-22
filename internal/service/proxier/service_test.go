@@ -19,6 +19,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -125,14 +126,22 @@ func TestServiceTCPRequest(t *testing.T) {
 	})
 }
 
-func TestServiceGRPCRequest(t *testing.T) {
-	// given
+func TestServiceSecureGRPCRequest(t *testing.T) {
 	container := test_utils.GetClean(t)
 	container.SrvNotificatorMock.EXPECT().SendInfoNewRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	testGRPCServer(t, container, true)
+}
+
+func TestServiceInSecureGRPCRequest(t *testing.T) {
+	container := test_utils.GetClean(t)
+	container.SrvNotificatorMock.EXPECT().SendInfoNewGRPCRequest(gomock.Any(), gomock.Any()).Times(1)
+	testGRPCServer(t, container, false)
+}
+
+func testGRPCServer(t *testing.T, container *test_utils.TestContainer, secureConnection bool) {
+	// given
 	proxyPort := test_utils.GetFreePort(t)
-
-	grpcSrv := test_utils.NewTestGRPCServer(t, test_utils.SelfSignedCert(t))
-
+	grpcSrv := test_utils.NewTestGRPCServer(t, test_utils.SelfSignedCert(t), secureConnection)
 	srvProxy := proxier.NewService(container.Ctx, generateConfig(t, grpcSrv, proxyPort), container.Log, container.SrvNotificatorMock)
 	t.Cleanup(srvProxy.Stop)
 	go srvProxy.Start()
@@ -148,10 +157,11 @@ func TestServiceGRPCRequest(t *testing.T) {
 	}, 2*time.Second, 20*time.Millisecond)
 
 	// when
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("127.0.0.1:%d", proxyPort),
-		grpc.WithTransportCredentials(credentials.NewTLS(grpcSrv.ClientTLSConfig())),
-	)
+	creds := insecure.NewCredentials()
+	if secureConnection {
+		creds = credentials.NewTLS(grpcSrv.ClientTLSConfig())
+	}
+	conn, err := grpc.NewClient(fmt.Sprintf("127.0.0.1:%d", proxyPort), grpc.WithTransportCredentials(creds))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
 

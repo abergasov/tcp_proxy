@@ -67,32 +67,39 @@ func (s *Service) handle(l logger.AppLogger, c net.Conn) {
 	br := bufio.NewReader(c)
 
 	var prefix io.Reader // bytes we must send first (the parsed HTTP request)
-	if s.conf.NotifyHTTP && looksLikeHTTP(br) {
-		_ = c.SetReadDeadline(time.Now().Add(300 * time.Millisecond)) // avoid hanging on non-HTTP
-		if req, err := http.ReadRequest(br); err == nil {
-			body, _ := io.ReadAll(req.Body)
-			_ = req.Body.Close()
-			if err = s.notificator.SendInfoNewRequest(req, body, c.RemoteAddr().String(), s.destinationAddr); err != nil {
-				payload := string(body)
-				if len(payload) > 1024 {
-					payload = payload[:1024] + "..."
-				}
-				l.Info("got http request",
-					logger.WithString("key", req.Method),
-					logger.WithString("payload", payload),
-					logger.WithString("path", req.URL.String()),
-				)
-				l.Error("failed to send info request", err)
+	if s.conf.NotifyHTTP {
+		if looksLikeUnsecureGRPC(br) {
+			if err := s.notificator.SendInfoNewGRPCRequest(c.RemoteAddr().String(), s.destinationAddr); err != nil {
+				l.Info("got unsecure grpc request")
+				l.Error("failed to send unsecure grpc request", err)
 			}
+		} else if looksLikeHTTP(br) {
+			_ = c.SetReadDeadline(time.Now().Add(300 * time.Millisecond)) // avoid hanging on non-HTTP
+			if req, err := http.ReadRequest(br); err == nil {
+				body, _ := io.ReadAll(req.Body)
+				_ = req.Body.Close()
+				if err = s.notificator.SendInfoNewRequest(req, body, c.RemoteAddr().String(), s.destinationAddr); err != nil {
+					payload := string(body)
+					if len(payload) > 1024 {
+						payload = payload[:1024] + "..."
+					}
+					l.Info("got http request",
+						logger.WithString("key", req.Method),
+						logger.WithString("payload", payload),
+						logger.WithString("path", req.URL.String()),
+					)
+					l.Error("failed to send info request", err)
+				}
 
-			// rebuild raw request to forward
-			req.Body = io.NopCloser(bytes.NewReader(body))
-			req.ContentLength = int64(len(body))
-			req.Header.Del("Transfer-Encoding") // avoid mismatch after ContentLength reset
+				// rebuild raw request to forward
+				req.Body = io.NopCloser(bytes.NewReader(body))
+				req.ContentLength = int64(len(body))
+				req.Header.Del("Transfer-Encoding") // avoid mismatch after ContentLength reset
 
-			var buf bytes.Buffer
-			if err = req.Write(&buf); err == nil {
-				prefix = bytes.NewReader(buf.Bytes())
+				var buf bytes.Buffer
+				if err = req.Write(&buf); err == nil {
+					prefix = bytes.NewReader(buf.Bytes())
+				}
 			}
 		}
 	}
@@ -119,6 +126,16 @@ func (s *Service) Stop() {
 	s.log.Info("stopping service")
 }
 
+var h2Preface = []byte("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n")
+
+func looksLikeUnsecureGRPC(br *bufio.Reader) bool {
+	b, err := br.Peek(len(h2Preface))
+	if err != nil {
+		return false
+	}
+	return bytes.Equal(b, h2Preface)
+}
+
 func looksLikeHTTP(br *bufio.Reader) bool {
 	b, err := br.Peek(4)
 	if err != nil {
@@ -134,7 +151,7 @@ func looksLikeHTTP(br *bufio.Reader) bool {
 		[]byte("HEAD"),
 		[]byte("OPTI"), // OPTIONS
 		[]byte("CONN"), // CONNECT
-		[]byte("PRI "), // h2c prior-knowledge preface
+		// grpc []byte("PRI "), // h2c prior-knowledge preface
 	}
 	for _, prefix := range knownPrefixes {
 		if bytes.HasPrefix(b, prefix) {
