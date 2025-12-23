@@ -5,17 +5,18 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"tcp_proxy/internal/service/proxier"
 
 	"gopkg.in/yaml.v2"
 )
 
 type AppConfig struct {
-	AppPort            int    `yaml:"app_port"`
-	DestinationAddress string `yaml:"destination_address"`
-	DestinationPort    int    `yaml:"destination_port"`
+	BoxName      string           `yaml:"box_name"`
+	SlackHookURL string           `yaml:"slack_hook_url"`
+	ProxyList    []proxier.Config `yaml:"proxy_list"`
 }
 
-func InitConf(confFile string) (*AppConfig, error) {
+func LoadConfig(confFile string) (*AppConfig, error) {
 	file, err := os.Open(filepath.Clean(confFile))
 	if err != nil {
 		return nil, fmt.Errorf("error open config file: %w", err)
