@@ -15,5 +15,5 @@ type Notification struct {
 }
 
 func (d *Notification) NotifyID() string {
-	return fmt.Sprintf("%s-%s-%s", strings.Split(d.RemoteURL, ":")[0], d.Method, d.RemoteIP)
+	return fmt.Sprintf("%s-%s-%s", strings.Split(d.RemoteIP, ":")[0], d.Method, d.RemoteURL)
 }
