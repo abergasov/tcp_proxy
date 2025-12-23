@@ -13,7 +13,6 @@ import (
 
 type Service struct {
 	boxName      string
-	boxPreBuild  string
 	log          logger.AppLogger
 	slackHookURL string
 }

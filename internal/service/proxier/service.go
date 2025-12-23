@@ -63,7 +63,10 @@ func (s *Service) Start() {
 
 func (s *Service) handle(l logger.AppLogger, c net.Conn) {
 	defer c.Close()
-
+	if tcpConn, ok := c.(*net.TCPConn); ok {
+		_ = tcpConn.SetKeepAlive(true)
+		_ = tcpConn.SetKeepAlivePeriod(30 * time.Second)
+	}
 	br := bufio.NewReader(c)
 
 	var prefix io.Reader // bytes we must send first (the parsed HTTP request)

@@ -1,6 +1,7 @@
 PROJECT_NAME:=tcp_proxy
 GOLANGCI_LINT := $(shell command -v golangci-lint 2> /dev/null)
 CURRENT_USER := $(shell whoami)
+CURDIR := $(shell pwd)
 
 # test coverage threshold
 COVERAGE_THRESHOLD:=30
