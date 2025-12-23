@@ -12,7 +12,7 @@ var (
 	DumpNotificationsInterval = time.Minute * 5
 )
 
-func (s *Service) handleHTTPNotification(l logger.AppLogger, r *http.Request, body []byte, remoteIP string) {
+func (s *Service) handleHTTPNotification(r *http.Request, body []byte, remoteIP string) {
 	bodyStr := string(body)
 	if len(body) > 1024 {
 		b := append(body[:1024], []byte("…<truncated>")...)
@@ -27,12 +27,6 @@ func (s *Service) handleHTTPNotification(l logger.AppLogger, r *http.Request, bo
 		Body:        bodyStr,
 	}
 	notifyID := d.NotifyID()
-
-	l.Info("got http request",
-		logger.WithString("key", d.Method),
-		logger.WithString("payload", d.Body),
-		logger.WithString("path", d.RemoteURL),
-	)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -63,6 +57,13 @@ func (s *Service) dumpNotifications() {
 		if err := s.notificator.SendInfoNewRequest(event, s.destinationAddr, s.eventsCounter[id]); err != nil {
 			s.log.Error("failed send notification", err)
 		}
+		s.log.Info("got http request",
+			logger.WithString("key", event.Method),
+			logger.WithString("payload", event.Body),
+			logger.WithString("path", event.RemoteURL),
+			logger.WithInt("count", s.eventsCounter[id]),
+			logger.WithString("remote_ip", event.RemoteIP),
+		)
 		delete(s.eventsTracker, id)
 		delete(s.eventsCounter, id)
 	}

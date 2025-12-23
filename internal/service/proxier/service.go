@@ -91,7 +91,7 @@ func (s *Service) handle(l logger.AppLogger, c net.Conn) {
 			if req, err := http.ReadRequest(br); err == nil {
 				body, _ := io.ReadAll(req.Body)
 				_ = req.Body.Close()
-				s.handleHTTPNotification(l, req, body, c.RemoteAddr().String())
+				s.handleHTTPNotification(req, body, c.RemoteAddr().String())
 
 				// rebuild raw request to forward
 				req.Body = io.NopCloser(bytes.NewReader(body))
