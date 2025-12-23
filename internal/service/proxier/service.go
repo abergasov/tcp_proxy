@@ -44,6 +44,7 @@ func NewService(ctx context.Context, conf *Config, log logger.AppLogger, notific
 }
 
 func (s *Service) Start() {
+	go s.bgDumpNotifications()
 	s.log.Info("starting service")
 	listener, err := net.Listen("tcp4", fmt.Sprintf(":%d", s.conf.ListenPort))
 	if err != nil {
@@ -81,18 +82,7 @@ func (s *Service) handle(l logger.AppLogger, c net.Conn) {
 			if req, err := http.ReadRequest(br); err == nil {
 				body, _ := io.ReadAll(req.Body)
 				_ = req.Body.Close()
-				if err = s.notificator.SendInfoNewRequest(req, body, c.RemoteAddr().String(), s.destinationAddr); err != nil {
-					payload := string(body)
-					if len(payload) > 1024 {
-						payload = payload[:1024] + "..."
-					}
-					l.Info("got http request",
-						logger.WithString("key", req.Method),
-						logger.WithString("payload", payload),
-						logger.WithString("path", req.URL.String()),
-					)
-					l.Error("failed to send info request", err)
-				}
+				s.handleHTTPNotification(l, req, body, c.RemoteAddr().String())
 
 				// rebuild raw request to forward
 				req.Body = io.NopCloser(bytes.NewReader(body))
@@ -127,6 +117,7 @@ func (s *Service) handle(l logger.AppLogger, c net.Conn) {
 
 func (s *Service) Stop() {
 	s.log.Info("stopping service")
+	s.dumpNotifications()
 }
 
 var h2Preface = []byte("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n")

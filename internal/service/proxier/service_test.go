@@ -23,6 +23,10 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+func init() {
+	proxier.DumpNotificationsInterval = 100 * time.Millisecond
+}
+
 func TestServiceHTTPRequest(t *testing.T) {
 	// given
 	container := test_utils.GetClean(t)
@@ -36,7 +40,7 @@ func TestServiceHTTPRequest(t *testing.T) {
 
 	validURL := fmt.Sprintf("http://127.0.0.1:%d/api/sample", proxyPort)
 	invalidURL := fmt.Sprintf("http://127.0.0.1:%d/abc", proxyPort)
-	container.SrvNotificatorMock.EXPECT().SendInfoNewRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(4)
+	container.SrvNotificatorMock.EXPECT().SendInfoNewRequest(gomock.Any(), gomock.Any(), gomock.Any()).Times(4)
 
 	// wait until proxy accepts
 	require.Eventually(t, func() bool {
@@ -128,7 +132,7 @@ func TestServiceTCPRequest(t *testing.T) {
 
 func TestServiceSecureGRPCRequest(t *testing.T) {
 	container := test_utils.GetClean(t)
-	container.SrvNotificatorMock.EXPECT().SendInfoNewRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	container.SrvNotificatorMock.EXPECT().SendInfoNewRequest(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	testGRPCServer(t, container, true)
 }
 
