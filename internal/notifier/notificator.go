@@ -78,31 +78,32 @@ func (s *Service) SendInfoNewGRPCRequest(remoteIP, destination string) error {
 }
 
 func (s *Service) SendInfoNewRequest(r *http.Request, body []byte, remoteIP, destination string) error {
-	return s.sendSlackMessage(map[string]any{
-		"blocks": []any{
-			getHeader(":eyes: observe new http request"),
-			map[string]any{
-				"type": "section",
-				"fields": []any{
-					slackField("From", remoteIP),
-					slackField("URL", r.URL.String()),
-				},
+	blocks := []any{
+		getHeader(":eyes: observe new http request"),
+		map[string]any{
+			"type": "section",
+			"fields": []any{
+				slackField("From", remoteIP),
+				slackField("URL", r.URL.String()),
 			},
-			map[string]any{
-				"type": "section",
-				"text": map[string]any{
-					"type": "mrkdwn",
-					"text": "```" + slackSafeBody(body, 1500) + "```",
-				},
-			},
-			s.getContextWithExtra(
-				fmt.Sprintf("content-length: *%d*", len(body)),
-				fmt.Sprintf("content-type: %s", r.Header.Get("content-type")),
-				fmt.Sprintf("method: %s", r.Method),
-				fmt.Sprintf("destination: %s", destination),
-			),
 		},
-	})
+	}
+	if len(body) > 0 {
+		blocks = append(blocks, map[string]any{
+			"type": "section",
+			"text": map[string]any{
+				"type": "mrkdwn",
+				"text": "```" + slackSafeBody(body, 1500) + "```",
+			},
+		})
+	}
+	blocks = append(blocks, s.getContextWithExtra(
+		fmt.Sprintf("content-length: *%d*", len(body)),
+		fmt.Sprintf("content-type: %s", r.Header.Get("content-type")),
+		fmt.Sprintf("method: %s", r.Method),
+		fmt.Sprintf("destination: %s", destination),
+	))
+	return s.sendSlackMessage(map[string]any{"blocks": blocks})
 }
 
 func (s *Service) SendTaskErrMessage(service string, startedAt, finishedAt time.Time, message string, errs ...Object) error {
