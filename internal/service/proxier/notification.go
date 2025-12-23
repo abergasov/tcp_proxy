@@ -3,17 +3,12 @@ package proxier
 import (
 	"net/http"
 	"strings"
-	"sync"
 	"tcp_proxy/internal/entities"
 	"tcp_proxy/internal/logger"
 	"time"
 )
 
 var (
-	mu            = &sync.Mutex{}
-	eventsTracker = make(map[string]*entities.Notification, 1000)
-	eventsCounter = make(map[string]int, 1000)
-
 	DumpNotificationsInterval = time.Minute * 5
 )
 
@@ -38,14 +33,14 @@ func (s *Service) handleHTTPNotification(l logger.AppLogger, r *http.Request, bo
 		logger.WithString("payload", d.Body),
 		logger.WithString("path", d.RemoteURL),
 	)
-	mu.Lock()
-	defer mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	eventsTracker[notifyID] = d
-	if _, ok := eventsCounter[notifyID]; !ok {
-		eventsCounter[notifyID] = 0
+	s.eventsTracker[notifyID] = d
+	if _, ok := s.eventsCounter[notifyID]; !ok {
+		s.eventsCounter[notifyID] = 0
 	}
-	eventsCounter[notifyID]++
+	s.eventsCounter[notifyID]++
 }
 
 func (s *Service) bgDumpNotifications() {
@@ -62,13 +57,13 @@ func (s *Service) bgDumpNotifications() {
 }
 
 func (s *Service) dumpNotifications() {
-	mu.Lock()
-	defer mu.Unlock()
-	for id, event := range eventsTracker {
-		if err := s.notificator.SendInfoNewRequest(event, s.destinationAddr, eventsCounter[id]); err != nil {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for id, event := range s.eventsTracker {
+		if err := s.notificator.SendInfoNewRequest(event, s.destinationAddr, s.eventsCounter[id]); err != nil {
 			s.log.Error("failed send notification", err)
 		}
-		delete(eventsTracker, id)
-		delete(eventsCounter, id)
+		delete(s.eventsTracker, id)
+		delete(s.eventsCounter, id)
 	}
 }

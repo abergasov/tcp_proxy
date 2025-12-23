@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
+	"tcp_proxy/internal/entities"
 	"tcp_proxy/internal/logger"
 	"tcp_proxy/internal/notifier"
 	"time"
@@ -27,6 +29,10 @@ type Service struct {
 
 	destinationAddr string
 	notificator     notifier.Notificator
+
+	mu            *sync.Mutex
+	eventsTracker map[string]*entities.Notification
+	eventsCounter map[string]int
 }
 
 func NewService(ctx context.Context, conf *Config, log logger.AppLogger, notificator notifier.Notificator) *Service {
@@ -40,6 +46,9 @@ func NewService(ctx context.Context, conf *Config, log logger.AppLogger, notific
 			logger.WithString("destination_address", destinationAddr),
 		),
 		notificator: notificator,
+
+		eventsTracker: make(map[string]*entities.Notification, 1_000),
+		eventsCounter: make(map[string]int, 1_000),
 	}
 }
 

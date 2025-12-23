@@ -1,6 +1,9 @@
 package entities
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Notification struct {
 	RemoteIP    string
@@ -12,5 +15,5 @@ type Notification struct {
 }
 
 func (d *Notification) NotifyID() string {
-	return fmt.Sprintf("%s-%s-%s", d.RemoteURL, d.Method, d.RemoteIP)
+	return fmt.Sprintf("%s-%s-%s", strings.Split(d.RemoteURL, ":")[0], d.Method, d.RemoteIP)
 }
