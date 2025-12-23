@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	DumpNotificationsInterval = time.Minute * 5
+	DumpNotificationsInterval = time.Minute * 30
 )
 
 func (s *Service) handleHTTPNotification(r *http.Request, body []byte, remoteIP string) {
