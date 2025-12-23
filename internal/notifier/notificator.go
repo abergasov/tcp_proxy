@@ -94,11 +94,15 @@ func (s *Service) SendInfoNewRequest(n *entities.Notification, destination strin
 		},
 	}
 	if n.BodyLength > 0 {
+		textBody := "bytes payload"
+		if strings.Contains(n.ContentType, "json") {
+			textBody = n.Body
+		}
 		blocks = append(blocks, map[string]any{
 			"type": "section",
 			"text": map[string]any{
 				"type": "mrkdwn",
-				"text": "```" + n.Body + "```",
+				"text": "```" + textBody + "```",
 			},
 		})
 	}
