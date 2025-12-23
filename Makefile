@@ -75,7 +75,7 @@ install_service: patch_sudoers ## Install service
 	@sed -i 's|^User=.*|User=$(shell whoami)|' proxier.service.local
 	sudo cp proxier.service.local /etc/systemd/system/proxier.service
 	@echo "-- enable service"
-	sudo systemctl proxier start && sudo systemctl enable proxier
+	sudo systemctl start proxier && sudo systemctl enable proxier
 
 .PHONY: help install-lint test gogen lint build run vulcheck coverage patch_sudoers deploy logs install_service self_deploy
 .DEFAULT_GOAL := help
