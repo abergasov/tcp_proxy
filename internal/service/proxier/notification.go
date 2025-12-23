@@ -13,6 +13,9 @@ var (
 )
 
 func (s *Service) handleHTTPNotification(r *http.Request, body []byte, remoteIP string) {
+	if !strings.Contains(r.URL.String(), "/eth/") {
+		return // disable non eth requests
+	}
 	bodyStr := string(body)
 	if len(body) > 1024 {
 		b := append(body[:1024], []byte("…<truncated>")...)
