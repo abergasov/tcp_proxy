@@ -30,7 +30,7 @@ type Service struct {
 	destinationAddr string
 	notificator     notifier.Notificator
 
-	mu            *sync.Mutex
+	mu            sync.Mutex
 	eventsTracker map[string]*entities.Notification
 	eventsCounter map[string]int
 }
