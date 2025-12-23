@@ -10,8 +10,8 @@
 package notifier
 
 import (
-	http "net/http"
 	reflect "reflect"
+	entities "tcp_proxy/internal/entities"
 	time "time"
 
 	gomock "go.uber.org/mock/gomock"
@@ -74,17 +74,17 @@ func (mr *MockNotificatorMockRecorder) SendInfoNewGRPCRequest(remoteIP, destinat
 }
 
 // SendInfoNewRequest mocks base method.
-func (m *MockNotificator) SendInfoNewRequest(r *http.Request, body []byte, remoteIP, destination string) error {
+func (m *MockNotificator) SendInfoNewRequest(n *entities.Notification, destination string, counts int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendInfoNewRequest", r, body, remoteIP, destination)
+	ret := m.ctrl.Call(m, "SendInfoNewRequest", n, destination, counts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendInfoNewRequest indicates an expected call of SendInfoNewRequest.
-func (mr *MockNotificatorMockRecorder) SendInfoNewRequest(r, body, remoteIP, destination any) *gomock.Call {
+func (mr *MockNotificatorMockRecorder) SendInfoNewRequest(n, destination, counts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendInfoNewRequest", reflect.TypeOf((*MockNotificator)(nil).SendInfoNewRequest), r, body, remoteIP, destination)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendInfoNewRequest", reflect.TypeOf((*MockNotificator)(nil).SendInfoNewRequest), n, destination, counts)
 }
 
 // SendTaskErrMessage mocks base method.

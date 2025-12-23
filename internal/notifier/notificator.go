@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"tcp_proxy/internal/entities"
 	"tcp_proxy/internal/logger"
 	"tcp_proxy/internal/utils"
 
@@ -77,32 +78,37 @@ func (s *Service) SendInfoNewGRPCRequest(remoteIP, destination string) error {
 	})
 }
 
-func (s *Service) SendInfoNewRequest(r *http.Request, body []byte, remoteIP, destination string) error {
-	return s.sendSlackMessage(map[string]any{
-		"blocks": []any{
-			getHeader(":eyes: observe new http request"),
-			map[string]any{
-				"type": "section",
-				"fields": []any{
-					slackField("From", remoteIP),
-					slackField("URL", r.URL.String()),
-				},
+func (s *Service) SendInfoNewRequest(n *entities.Notification, destination string, counts int) error {
+	headerText := ":eyes: observe new http request"
+	if counts > 1 {
+		headerText = fmt.Sprintf(":eyes: observe new http request (%d counts)", counts)
+	}
+	blocks := []any{
+		getHeader(headerText),
+		map[string]any{
+			"type": "section",
+			"fields": []any{
+				slackField("From", n.RemoteIP),
+				slackField("URL", n.RemoteURL),
 			},
-			map[string]any{
-				"type": "section",
-				"text": map[string]any{
-					"type": "mrkdwn",
-					"text": "```" + slackSafeBody(body, 1500) + "```",
-				},
-			},
-			s.getContextWithExtra(
-				fmt.Sprintf("content-length: *%d*", len(body)),
-				fmt.Sprintf("content-type: %s", r.Header.Get("content-type")),
-				fmt.Sprintf("method: %s", r.Method),
-				fmt.Sprintf("destination: %s", destination),
-			),
 		},
-	})
+	}
+	if n.BodyLength > 0 {
+		blocks = append(blocks, map[string]any{
+			"type": "section",
+			"text": map[string]any{
+				"type": "mrkdwn",
+				"text": "```" + n.Body + "```",
+			},
+		})
+	}
+	blocks = append(blocks, s.getContextWithExtra(
+		fmt.Sprintf("content-length: *%d*", n.BodyLength),
+		fmt.Sprintf("content-type: %s", n.ContentType),
+		fmt.Sprintf("method: %s", n.Method),
+		fmt.Sprintf("destination: %s", destination),
+	))
+	return s.sendSlackMessage(map[string]any{"blocks": blocks})
 }
 
 func (s *Service) SendTaskErrMessage(service string, startedAt, finishedAt time.Time, message string, errs ...Object) error {
